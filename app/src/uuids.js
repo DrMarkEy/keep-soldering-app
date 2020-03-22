@@ -13,6 +13,8 @@ var uuids = {
 			moduleCount: "8c2668c5-de50-4f05-848c-b5aafce02283",
 			solvedCount: "bf624b71-ce58-4851-85e6-f0895de68041",
 			serial: "9be5491f-198c-4d6b-9f97-7634d63fd30f",
+			
+			command: "36881b37-d617-4e8f-906a-3ab843b2e9ed",
 		},
 	}
 };

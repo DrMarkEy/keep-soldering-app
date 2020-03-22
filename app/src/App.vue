@@ -1,12 +1,33 @@
 <template>
   <div id="app">    
-  {{state.timeRemaining}}
-	<button @click="test">Connect!</button>
+    <timer :value="state.timeRemaining"/><br/>
+	
+	<button @click="connect">Connect!</button>
+	<hr/>
+	<button @click="pause">Pause</button>
+	<button @click="resume">Resume</button>
+	<!--<button>Resume</button>-->
   </div>
 </template>
 
 <script>
+import Timer from './components/Timer.vue';
 
+//Hauptmenü:
+//Spielen
+	//Freies Spiel
+		//-> Spiel mit den verbauten Modulen
+	//Kampagne	
+		//-> Zu verbauende Module +Zeit werden von App vorgegeben
+	//Anleitung öffnen
+		//-> PDF wird geöffnet
+	//Bombenleger-Modus
+		//-> Play/Pause und Timer verändern, Events auslösen etc. für Geburtstagsfeiern
+//Konfigurieren
+	//Allgemeine Eigenschaften
+		//-> Lautstärke, Tick-Sound, Sprache, Vibration...
+	//Modul-Settings		
+	
 
 //----- STATUS ------
 // Time Remaining
@@ -27,13 +48,15 @@ import uuids from './uuids';
 export default {
   name: 'App',
   
+  components: { Timer },  
+  
   data: function() {
 	return {
 	  state: {
 	    state: -1, //-1: Not connected, 0: inactive, 1: running, 2: paused, 3: solved, 4: exploded
-	    timeRemaining: -1,	  
+	    timeRemaining: 0,	  
 	    strikes: 0,
-	    battery: -1,
+	    batteryLevel: -1,
 	    charging: 0,
 	    moduleCount: 0,
 	    solvedCount: 0,
@@ -43,12 +66,24 @@ export default {
 	  configuration: {
 	    timeTotal: 0,
 		tickSound: undefined
-	  }
+	  },
+	  
+	  commandCharacteristic: undefined
 	}
   },
   
   methods: {
-	test: async function() {
+    pause: async function() {
+	  let commandValue = new Uint8Array([0x02]);
+	  this.commandCharacteristic.writeValue(commandValue);
+	},
+	
+	resume: async function() {
+	  let commandValue = new Uint8Array([0x03]);
+	  this.commandCharacteristic.writeValue(commandValue);
+	},
+  
+	connect: async function() {
 	  var thi = this;
 	
 	  // Step 1: Scan for a device with the general service
@@ -62,16 +97,16 @@ export default {
 	  var characteristic = await service.getCharacteristic(uuids.characteristics.state.state);
 	  characteristic.startNotifications();
 	  characteristic.addEventListener('characteristicvaluechanged', function(event) {
-		thi.state.timeRemaining = event.target.value.getUint8(0)+256*event.target.value.getUint8(1);
+	    
+		  var buffer = event.target.value;
+		  thi.state.state = buffer.getUint8(0);
+		  thi.state.timeRemaining = event.target.value.getUint8(1)+256*event.target.value.getUint8(2);
+		  thi.state.strikes = event.target.value.getUint8(3);
+		  thi.state.batteryLevel = event.target.value.getUint8(4);
+		  thi.state.charging = event.target.value.getUint8(5);
 	  });	  
-	  
-	  var val = await characteristic.readValue();
-	  
-	  
-	  let decoder = new TextDecoder('utf-8');
-      console.log('> Characteristic User Description: ' + decoder.decode(val));
-	  
-	  
+	 
+	  this.commandCharacteristic = await service.getCharacteristic(uuids.characteristics.state.command);	  
 	  
 	  //SET LED
 	  /*var LEDcharacteristic = await service.getCharacteristic("7961cceb-a950-4dc9-8f38-d8ed8931fce6");	  
