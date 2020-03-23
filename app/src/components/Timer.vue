@@ -1,10 +1,10 @@
 <template>
-	<div>
-		<seven-segment class="segmented-number" :value="m1" :rounded="false" :segment-width="25" :segment-height="5" on-color="#f00" off-color="transparent"/>
-		<seven-segment class="segmented-number" :value="m2" :rounded="false" :segment-width="25" :segment-height="5" on-color="#f00" off-color="transparent"/>
+	<div class="timer">
+		<seven-segment class="segmented-number" :value="m1" :rounded="false" :segment-width="20" :segment-height="4" on-color="#f00" off-color="transparent"/>
+		<seven-segment class="segmented-number" :value="m2" :rounded="false" :segment-width="20" :segment-height="4" on-color="#f00" off-color="transparent"/>
 		<span class="colon">:</span>
-		<seven-segment class="segmented-number" :value="s1" :rounded="false" :segment-width="25" :segment-height="5" on-color="#f00" off-color="transparent"/>
-		<seven-segment class="segmented-number" :value="s2" :rounded="false" :segment-width="25" :segment-height="5" on-color="#f00" off-color="transparent"/>
+		<seven-segment class="segmented-number" :value="s1" :rounded="false" :segment-width="20" :segment-height="4" on-color="#f00" off-color="transparent"/>
+		<seven-segment class="segmented-number" :value="s2" :rounded="false" :segment-width="20" :segment-height="4" on-color="#f00" off-color="transparent"/>
 	</div>
 </template>
 <script>
@@ -66,5 +66,4 @@ function pad(num, size) {
 	font-size: 60pt;	
 	transform: translate(0px, -8px);
 }
-
 </style>

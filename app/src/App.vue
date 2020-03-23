@@ -1,17 +1,27 @@
 <template>
-  <div id="app">    
-    <timer :value="state.timeRemaining"/><br/>
-	
-	<button @click="connect">Connect!</button>
-	<hr/>
-	<button @click="pause">Pause</button>
-	<button @click="resume">Resume</button>
-	<!--<button>Resume</button>-->
+  <div id="app">        	
+	<div v-if="typeof(device)!=='undefined'">
+		<div class="device-name">
+			{{device.name}}
+		</div>
+		<hr/>
+		<timer :value="state.timeRemaining"/>
+		
+		<hr/>		
+		<button @click="pause">Pause</button>
+		<button @click="resume">Resume</button>
+		<hr/>
+		<ol class="module-list">
+			<module v-if="m.type !== 0 && m.type !== 1" v-for="m in modules" :type="m.type"/>
+		</ol>
+	</div>
+	<div v-else>
+		<button @click="connect">Connect!</button>
+	</div>
   </div>
 </template>
 
 <script>
-import Timer from './components/Timer.vue';
 
 //Hauptmenü:
 //Spielen
@@ -44,11 +54,13 @@ import Timer from './components/Timer.vue';
 
 
 import uuids from './uuids';
+import Timer from './components/Timer.vue';
+import Module from './components/Module.vue';
 
 export default {
   name: 'App',
   
-  components: { Timer },  
+  components: { Timer, Module },  
   
   data: function() {
 	return {
@@ -62,6 +74,9 @@ export default {
 	    solvedCount: 0,
 		serial: '',
 	  },
+	  
+	  device: undefined,
+	  modules: [],
 	  
 	  configuration: {
 	    timeTotal: 0,
@@ -92,6 +107,8 @@ export default {
 	  });
 	 
 	  var server = await device.gatt.connect();
+	  thi.device =  server.device;
+	  
 	  var service = await server.getPrimaryService(uuids.services.state);
 	  
 	  var characteristic = await service.getCharacteristic(uuids.characteristics.state.state);
@@ -104,6 +121,27 @@ export default {
 		  thi.state.strikes = event.target.value.getUint8(3);
 		  thi.state.batteryLevel = event.target.value.getUint8(4);
 		  thi.state.charging = event.target.value.getUint8(5);
+	  });	  
+	  
+	  var moduleStateCharacteristic = await service.getCharacteristic(uuids.characteristics.state.moduleStates);
+	  moduleStateCharacteristic.startNotifications();
+	  moduleStateCharacteristic.addEventListener('characteristicvaluechanged', function(event) {
+	    
+		  var buffer = event.target.value;
+		  thi.modules = [];
+		  
+		  var moduleCount = buffer.getUint8(0);
+		  var solvedBooleans = buffer.getUint8(moduleCount + 1) + event.target.value.getUint8(moduleCount + 2) >> 8;
+		  
+		  for(var i = 0; i < moduleCount; i++)
+		  {
+			var type = buffer.getUint8(i + 1);
+			var solved = (solvedBooleans << i) === 1;
+			
+			thi.modules.push({type: type, solved: solved});
+		  }
+		  
+		  console.log('modules', thi.modules);
 	  });	  
 	 
 	  this.commandCharacteristic = await service.getCharacteristic(uuids.characteristics.state.command);	  
@@ -134,12 +172,36 @@ export default {
 </script>
 
 <style>
+body
+{
+  background-color: gray;  
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  max-width: 380px;  
+  
+  background-color: black;
+  color: white;
+  margin: auto;
+  padding: 5px;  
+}
+
+ol li
+{
+	list-style-type: none;
+}
+
+.module-list
+{
+	
+}
+
+.device-name
+{
+	margin-top: 5px;
 }
 </style>
